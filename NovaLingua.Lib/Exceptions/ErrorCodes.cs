@@ -15,6 +15,7 @@ public enum FileErrorCode
 public enum LangDataErrorCode
 {
     NoError = 0,
-    InvalidFileFormat = 2001,    // extraArgs: `invalidPartName`
+    InvalidPartFormat = 2001,
+    RequiredPartNotFound = 2002,
     Others = 2999                // extraArgs: `ex.Message`
 }

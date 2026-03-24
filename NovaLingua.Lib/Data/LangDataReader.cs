@@ -4,14 +4,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
+using NovaLingua.Lib.Data.DataStructures;
 using NovaLingua.Lib.Exceptions;
 
 namespace NovaLingua.Lib.Data;
 
 public static class LangDataReader
 {
-    public static LangData ReadFromDisk(string zipFilePath)
+    public static LangData ReadNld(string zipFilePath)
     {
         var data = new LangData();
 
@@ -21,14 +21,19 @@ public static class LangDataReader
         }
 
         using var zipFileStream = SafeOpenReadFileStream(zipFilePath);
-        using var zipArchive = SafeUnarchiveZipFileStream(zipFileStream, zipFilePath);
+        using var zipArchive = SafeOpenReadZipArchive(zipFileStream, zipFilePath);
+
+        var metaData = MetaData.Empty;
+        var alphabetData = AlphabetData.Empty;
+        var wordListData = WordListData.Empty;
+        var todoListData = TodoListData.Empty;
 
         foreach (var entry in zipArchive.Entries)
         {
             if (string.IsNullOrEmpty(entry.Name))
             {
                 continue;
-            }
+            } // skip directories for now
 
             string fileName = entry.Name.ToLower();
             string fileExt = Path.GetExtension(fileName);
@@ -38,13 +43,41 @@ public static class LangDataReader
             {
                 using var reader = new StreamReader(entryStream);
                 string jsonData = SafeReadStreamReaderToEnd(reader, $"{zipFilePath}/{fileName}", "Json inside Zip Archive");
-                if (fileName == "alphabet.json")
+                if (fileName == "meta.json")
                 {
-                    var alphabetData = SafeDeserializeJsonAlphabetData(jsonData);
-                    // TODO: check alphabet data
+                    metaData = SafeDeserializeJsonData<MetaData>(jsonData);
+                }
+                else if (fileName == "alphabet.json")
+                {
+                    alphabetData = SafeDeserializeJsonData<AlphabetData>(jsonData);
+                }
+                else if (fileName == "wordlist.json")
+                {
+                    wordListData = SafeDeserializeJsonData<WordListData>(jsonData);
+                }
+                else if (fileName == "todolist.json")
+                {
+                    todoListData = SafeDeserializeJsonData<TodoListData>(jsonData);
+                }
+                else
+                {
+                    // TODO: log unknown file found
                 }
             }
+            else
+            {
+                // TODO: log unknown file format found
+            }
         }
+
+        var notFoundPartList = GetNotFoundPartList().ToArray();
+        if (notFoundPartList.Length != 0)
+        {
+            string notFoundPartListString = string.Join(", ", notFoundPartList);
+            throw new LangDataException(LangDataErrorCode.RequiredPartNotFound, notFoundPartListString);
+        } // one / some required part(s) not found
+
+        // TODO: check parts format
 
         return data;
 
@@ -69,7 +102,7 @@ public static class LangDataReader
             }
         }
 
-        static ZipArchive SafeUnarchiveZipFileStream(FileStream zipFileStream, string zipFilePath)
+        static ZipArchive SafeOpenReadZipArchive(FileStream zipFileStream, string zipFilePath)
         {
             try
             {
@@ -119,7 +152,7 @@ public static class LangDataReader
             }
         }
 
-        static DataStructures.AlphabetData SafeDeserializeJsonAlphabetData(string jsonData)
+        static T SafeDeserializeJsonData<T>(string jsonData) where T : IDataStructure<T>
         {
             try
             {
@@ -127,17 +160,25 @@ public static class LangDataReader
                 {
                     PropertyNameCaseInsensitive = true
                 };
-                var alphabetData = JsonSerializer.Deserialize<DataStructures.AlphabetData>(jsonData, option);
-                return alphabetData ?? DataStructures.AlphabetData.Empty;
+                var deserializedData = JsonSerializer.Deserialize<T>(jsonData, option);
+                return deserializedData ?? T.Empty;
             }
             catch (Exception ex)
             {
                 throw ex switch
                 {
-                    JsonException => new LangDataException(LangDataErrorCode.InvalidFileFormat, "Alphabet"),
-                    _ => new LangDataException(LangDataErrorCode.Others, ex.Message)
+                    JsonException => new LangDataException(LangDataErrorCode.InvalidPartFormat, T.Type),
+                    _ => new LangDataException(LangDataErrorCode.Others, T.Type, ex.Message)
                 };
             }
+        }
+
+        IEnumerable<string> GetNotFoundPartList()
+        {
+            if (metaData.IsEmpty) yield return MetaData.Type;
+            if (alphabetData.IsEmpty) yield return AlphabetData.Type;
+            if (wordListData.IsEmpty) yield return WordListData.Type;
+            if (todoListData.IsEmpty) yield return TodoListData.Type;
         }
 
         #endregion LocalFunction
