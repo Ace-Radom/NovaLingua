@@ -1,12 +1,9 @@
 ﻿namespace NovaLingua.Lib.Exceptions;
 
-public class LangDataException : AppException
-{
-    public LangDataException(LangDataErrorCode errorCode, params string[] extraArgs)
-        : base(
-            (int)errorCode,
-            errorCode.ToString(),
-            extraArgs
+public class LangDataException(LangDataErrorCode errorCode, string part, params string[] extraArgs) : AppException(
+        (int)errorCode,
+        errorCode.ToString(),
+        [part, ..extraArgs ?? []]
         )
-    { }
+{
 }
