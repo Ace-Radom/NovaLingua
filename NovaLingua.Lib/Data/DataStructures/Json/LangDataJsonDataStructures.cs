@@ -1,21 +1,19 @@
 ﻿using System.Collections.Generic;
 
-namespace NovaLingua.Lib.Data.DataStructures;
+namespace NovaLingua.Lib.Data.DataStructures.Json;
 
-internal class MetaData : IDataStructure<MetaData>
+internal class MetaData : IJsonDataStructure<MetaData>
 {
     public required int Version { get; set; }
     public required string LangName { get; set; }
     public string LangVersion { get; set; } = "";
-    public required int DefinitionLang { get; set; }
-    // local lang, which all conlang words should be translated into
-    public string LangNameTranslation { get; set; } = "";
+    public required int LocalLang { get; set; }
+    // def lang, which all conlang words should be translated into
     public string LangDescription { get; set; } = "";
     public required long CreateTimeTs { get; set; }
     public required long LastModifyTimeTs { get; set; }
 
     public required bool AutoGenerationUseVariants { get; set; }
-    public required bool ForceLetterUnique { get; set; }
     public required bool ForceLetterVariantGlobalUnique { get; set; }
     // one variant of a letter cannot be same as another letter (or its upper & variants)
     public required bool ForceWordUnique { get; set; }
@@ -25,44 +23,42 @@ internal class MetaData : IDataStructure<MetaData>
     public required bool WordCaseInsensitive { get; set; }
 
 
-    public bool IsEmpty => (Version < 0);
+    public bool IsEmpty => Version < 0;
     public static MetaData Empty => new()
     {
         Version = -1,
         LangName = "",
-        DefinitionLang = -1,
+        LocalLang = -1,
         CreateTimeTs = -1,
         LastModifyTimeTs = -1,
         AutoGenerationUseVariants = false,
-        ForceLetterUnique = false,
         ForceLetterVariantGlobalUnique = false,
         ForceWordUnique = false,
         ForceWordInflectionGlobalUnique = false,
         ForceWordDefinitionUnique = false,
         WordCaseInsensitive = false
     };
-    public static string Type => nameof(MetaData);
+    public static string TypeName => nameof(MetaData);
 }
 
-internal class AlphabetData : IDataStructure<AlphabetData>
+internal class AlphabetData : IJsonDataStructure<AlphabetData>
 {
     public required int Version { get; set; }
-    public required List<LetterData> Vowels { get; set; }
-    public required List<LetterData> Consonants { get; set; }
+    public required List<LetterData> Letters { get; set; }
 
-    public bool IsEmpty => (Version < 0);
+    public bool IsEmpty => Version < 0;
     public static AlphabetData Empty => new()
     {
         Version = -1,
-        Vowels = [],
-        Consonants = []
+        Letters = []
     };
-    public static string Type => nameof(AlphabetData);
+    public static string TypeName => nameof(AlphabetData);
 }
 
 internal class LetterData
 {
     public required string Id { get; set; }
+    public required int Type { get; set; }
     public required string Letter { get; set; }
     public required string LetterUppercase { get; set; }
     public required int AlphabeticOrder { get; set; }
@@ -81,24 +77,25 @@ internal class LetterVariantData
     public required string Id { get; set; }
     // just a normal uuid here
     // when referencing variants in words, use `root-id`-`variant-id`
-    public required string VariantLetter { get; set; }
-    public required string VariantLetterUppercase { get; set; }
+    public required string Letter { get; set; }
+    public required string LetterUppercase { get; set; }
+    public required int AlphabeticOrder { get; set; }
     public string Comment { get; set; } = "";
     public required long AddTimeTs { get; set; }
 }
 
-internal class WordListData : IDataStructure<WordListData>
+internal class WordListData : IJsonDataStructure<WordListData>
 {
     public required int Version { get; set; }
     public required List<WordData> Words { get; set; }
 
-    public bool IsEmpty => (Version < 0);
+    public bool IsEmpty => Version < 0;
     public static WordListData Empty => new()
     {
         Version = -1,
         Words = [],
     };
-    public static string Type => nameof(WordListData);
+    public static string TypeName => nameof(WordListData);
 }
 
 internal class WordData
@@ -130,20 +127,20 @@ internal class WordLetterData
     public required bool UseUpper { get; set; }
 }
 
-internal class TodoListData : IDataStructure<TodoListData>
+internal class TodoListData : IJsonDataStructure<TodoListData>
 {
     public required int Version { get; set; }
     public required List<TodoLabelData> Labels { get; set; }
     public required List<TodoData> Todos { get; set; }
 
-    public bool IsEmpty => (Version < 0);
+    public bool IsEmpty => Version < 0;
     public static TodoListData Empty => new()
     {
         Version = -1,
         Labels = [],
         Todos = []
     };
-    public static string Type => nameof(TodoListData);
+    public static string TypeName => nameof(TodoListData);
 }
 
 internal class TodoLabelData
