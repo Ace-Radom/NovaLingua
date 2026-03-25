@@ -45,12 +45,16 @@ internal class AlphabetData : IJsonDataStructure<AlphabetData>
 {
     public required int Version { get; set; }
     public required List<LetterData> Letters { get; set; }
+    public required string HeadLetterId { get; set; }
+    public required string TailLetterId { get; set; }
 
     public bool IsEmpty => Version < 0;
     public static AlphabetData Empty => new()
     {
         Version = -1,
-        Letters = []
+        Letters = [],
+        HeadLetterId = "",
+        TailLetterId = ""
     };
     public static string TypeName => nameof(AlphabetData);
 }
@@ -61,10 +65,14 @@ internal class LetterData
     public required int Type { get; set; }
     public required string Letter { get; set; }
     public required string LetterUppercase { get; set; }
-    public required int AlphabeticOrder { get; set; }
+    public required string PrevLetterId { get; set; }
+    public required string NextLetterId { get; set; }
     public string Comment { get; set; } = "";
     public required List<LetterVariantData> Variants { get; set; }
     // variants are special forms of a letter, they share max count & have the same placement rule
+    public required string HeadVariantId { get; set; }
+    public required string TailVariantId { get; set; }
+
     public required int MaxCountInWord { get; set; }
     public required int PlacementRule { get; set; }
     public required bool AllowInAutoGeneration { get; set; }
@@ -79,7 +87,8 @@ internal class LetterVariantData
     // when referencing variants in words, use `root-id`-`variant-id`
     public required string Letter { get; set; }
     public required string LetterUppercase { get; set; }
-    public required int AlphabeticOrder { get; set; }
+    public required string PrevLetterId { get; set; }
+    public required string NextLetterId { get; set; }
     public string Comment { get; set; } = "";
     public required long AddTimeTs { get; set; }
 }

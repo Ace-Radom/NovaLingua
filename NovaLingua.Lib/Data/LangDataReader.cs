@@ -78,7 +78,9 @@ public static class LangDataReader
             string notFoundPartListString = string.Join(", ", notFoundPartList);
             throw new LangDataException(LangDataErrorCode.RequiredPartNotFound, notFoundPartListString);
         } // one / some required part(s) not found
-        // check all required parts exist
+          // check all required parts exist
+
+        #region MetadataRead
 
         data.LangName = metaData.LangName;
         data.LangVersion = metaData.LangVersion;
@@ -102,11 +104,14 @@ public static class LangDataReader
             ForceWordDefinitionUnique = metaData.ForceWordDefinitionUnique,
             WordCaseInsensitive = metaData.WordCaseInsensitive
         };
-        // read metadata
+
+        #endregion MetadataRead
+
+        #region AlphabetRead
+
+        #region LettersRead
 
         var letterSet = new HashSet<string>(); // set for checking letter collision
-        var alphabeticOrderList = new List<(int Order, string Id)>(); // list for checking alphabetic order collision
-        // the tuple stores (order, id), for later quick reordering alphabetic orders (e.g. {0,3,4} -> {0,1,2})
         foreach (var letter in alphabetData.Letters)
         {
             var id = letter.Id;
@@ -116,7 +121,7 @@ public static class LangDataReader
                     AlphabetData.TypeName, "Letters", id
                 );
             } // id collision
-              // check if id already exists
+            // check if id already exists
 
             #region LetterCheck
 
@@ -140,16 +145,6 @@ public static class LangDataReader
 
             // TODO: check letter legality (with regex)
 
-            var thisAlphabeticOrder = letter.AlphabeticOrder;
-            if (alphabeticOrderList.Exists(m => m.Order == thisAlphabeticOrder))
-            {
-                throw new LangDataException(LangDataErrorCode.DataCollision,
-                    AlphabetData.TypeName, $"Letters/{id}/AlphabeticOrder", thisAlphabeticOrder.ToString()
-                );
-            } // alphabetic order collision
-            alphabeticOrderList.Add((thisAlphabeticOrder, id));
-            // check if alphabetic order already exists
-
             #endregion LetterCheck
 
             var thisLetterData = new LangDataLetter()
@@ -164,7 +159,8 @@ public static class LangDataReader
                 },
                 Letter = thisLetter,
                 LetterUppercase = thisLetterUppercase,
-                AlphabeticOrder = thisAlphabeticOrder,
+                PrevLetterId = letter.PrevLetterId,
+                NextLetterId = letter.NextLetterId,
                 Comment = letter.Comment,
                 MaxCountInWord = letter.MaxCountInWord,
                 PlacementRule = letter.PlacementRule.ToLetterPlacementRule() switch
@@ -180,8 +176,9 @@ public static class LangDataReader
                 AddTimeTs = letter.AddTimeTs, // value checked by setter
             }; // build basic letter data
 
-            var variantLetterSet = new HashSet<string>();
-            var variantAlphabeticOrderList = new List<(int Order, string Id)>();
+            #region VariantsRead
+
+            var variantSet = new HashSet<string>();
             foreach (var variant in letter.Variants)
             {
                 var vid = variant.Id;
@@ -194,62 +191,52 @@ public static class LangDataReader
 
                 #region VariantLetterCheck
 
-                var thisVariantLetter = variant.Letter;
-                var thisVariantLetterUppercase = variant.LetterUppercase;
-                if (variantLetterSet.Contains(thisVariantLetter))
+                var thisVariant = variant.Letter;
+                var thisVariantUppercase = variant.LetterUppercase;
+                if (variantSet.Contains(thisVariant))
                 {
                     throw new LangDataException(LangDataErrorCode.DataCollision,
-                        AlphabetData.TypeName, $"Letters/{id}/Variants/{vid}/Letter", thisVariantLetter
+                        AlphabetData.TypeName, $"Letters/{id}/Variants/{vid}/Letter", thisVariant
                     );
                 } // variant letter collision
-                variantLetterSet.Add(thisVariantLetter);
-                if (variantLetterSet.Contains(thisVariantLetterUppercase))
+                variantSet.Add(thisVariant);
+                if (variantSet.Contains(thisVariantUppercase))
                 {
                     throw new LangDataException(LangDataErrorCode.DataCollision,
                         AlphabetData.TypeName,
-                        $"Letters/{id}/Variants/{vid}/LetterUppercase", thisVariantLetterUppercase
+                        $"Letters/{id}/Variants/{vid}/LetterUppercase", thisVariantUppercase
                     );
                 } // variant letter uppercase collision
-                variantLetterSet.Add(thisVariantLetterUppercase);
+                variantSet.Add(thisVariantUppercase);
                 if (data.Config.ForceLetterVariantGlobalUnique)
                 {
-                    if (letterSet.Contains(thisVariantLetter))
+                    if (letterSet.Contains(thisVariant))
                     {
                         throw new LangDataException(LangDataErrorCode.DataCollision,
                             AlphabetData.TypeName,
-                            $"Letters/{id}/Variants/{vid}/Letter", thisVariantLetter
+                            $"Letters/{id}/Variants/{vid}/Letter", thisVariant
                         );
                     } // variant letter global collision
-                    letterSet.Add(thisVariantLetter);
-                    if (letterSet.Contains(thisVariantLetterUppercase))
+                    letterSet.Add(thisVariant);
+                    if (letterSet.Contains(thisVariantUppercase))
                     {
                         throw new LangDataException(LangDataErrorCode.DataCollision,
                             AlphabetData.TypeName,
-                            $"Letters/{id}/Variants/{vid}/LetterUppercase", thisVariantLetterUppercase
+                            $"Letters/{id}/Variants/{vid}/LetterUppercase", thisVariantUppercase
                         );
                     } // variant letter uppercase global collision
-                    letterSet.Add(thisVariantLetterUppercase);
+                    letterSet.Add(thisVariantUppercase);
                 } // variants global unique check enabled
                 // check if variant letter (and its uppercase) already exists
-
-                var thisVariantAlphabeticOrder = variant.AlphabeticOrder;
-                if (variantAlphabeticOrderList.Exists(m => m.Order == thisVariantAlphabeticOrder))
-                {
-                    throw new LangDataException(LangDataErrorCode.DataCollision,
-                        AlphabetData.TypeName,
-                        $"Letters/{id}/Variants/{vid}/AlphabeticOrder", thisVariantAlphabeticOrder.ToString()
-                    );
-                } // variant alphabetic order collision
-                variantAlphabeticOrderList.Add((thisVariantAlphabeticOrder, vid));
-                // check if variant alphabetic order already exists
 
                 #endregion VariantLetterCheck
 
                 var thisVowelVariantData = new LangDataLetterVariant()
                 {
-                    Letter = thisVariantLetter,
-                    LetterUppercase = thisVariantLetterUppercase,
-                    AlphabeticOrder = thisVariantAlphabeticOrder,
+                    Letter = thisVariant,
+                    LetterUppercase = thisVariantUppercase,
+                    PrevLetterId = variant.PrevLetterId,
+                    NextLetterId = variant.NextLetterId,
                     Comment = variant.Comment,
                     AddTimeTs = variant.AddTimeTs // value checked by setter
                 };
@@ -257,38 +244,34 @@ public static class LangDataReader
                 thisLetterData.Variants.Add(vid, thisVowelVariantData);
             } // read variants
 
-            variantAlphabeticOrderList = variantAlphabeticOrderList
-                .OrderBy(x => x.Order)
-                .Select((item, index) => (index, item.Id))
-                .ToList();
-            foreach (var (order, vid) in variantAlphabeticOrderList)
+            #endregion VariantsRead
+
+            thisLetterData.HeadVariantId = letter.HeadVariantId;
+            thisLetterData.TailVariantId = letter.TailVariantId;
+            if (!CheckLetterLinkedList(thisLetterData.HeadVariantId, thisLetterData.TailVariantId, thisLetterData.Variants))
             {
-                if (!thisLetterData.Variants.TryUpdateValue(vid, v => v.AlphabeticOrder = order))
-                {
-                    throw new LangDataException(LangDataErrorCode.Unexpected,
-                        AlphabetData.TypeName, "Variant disappeared, wtf?"
-                    );
-                }
-            } // reorder variants
+                throw new LangDataException(LangDataErrorCode.InvalidValue,
+                    AlphabetData.TypeName, $"Letters/{id}/Variants", "Illegal Linked List"
+                );
+            } // illegal variant linked list
 
             data.Alphabet.Letters.Add(id, thisLetterData);
         } // read letters
-        alphabeticOrderList = alphabeticOrderList
-            .OrderBy(x => x.Order)
-            .Select((item, index) => (index, item.Id))
-            .ToList();
-        foreach (var (order, id) in alphabeticOrderList)
-        {
-            if (!data.Alphabet.Letters.TryUpdateValue(id, v => v.AlphabeticOrder = order))
-            {
-                throw new LangDataException(LangDataErrorCode.Unexpected,
-                    AlphabetData.TypeName, "Letter disappeared, wtf?"
-                );
-            }
-        } // reorder letters
-        // read alphabet
 
-        // TODO: check function (read alphabet, TryUpdateValue)
+        #endregion LettersRead
+
+        data.Alphabet.HeadLetterId = alphabetData.HeadLetterId;
+        data.Alphabet.TailLetterId = alphabetData.TailLetterId;
+        if (!CheckLetterLinkedList(data.Alphabet.HeadLetterId, data.Alphabet.TailLetterId, data.Alphabet.Letters))
+        {
+            throw new LangDataException(LangDataErrorCode.InvalidValue,
+                AlphabetData.TypeName, $"Letters", "Illegal Linked List"
+            );
+        } // illegal letter linked list
+
+        #endregion AlphabetRead
+
+        // TODO: check function (read alphabet)
 
         // TODO: check parts format
 
@@ -392,6 +375,70 @@ public static class LangDataReader
             if (alphabetData.IsEmpty) yield return AlphabetData.TypeName;
             if (wordListData.IsEmpty) yield return WordListData.TypeName;
             if (todoListData.IsEmpty) yield return TodoListData.TypeName;
+        }
+
+        static bool CheckLetterLinkedList<T>(string headId, string tailId, Dictionary<string, T> list) where T : AbstractLangDataLetter
+        {
+            if (list.Count == 0)
+            {
+                return true;
+            } // empty list
+            if (headId == "" || tailId == "")
+            {
+                return false;
+            } // list not empty but head / tail not specified
+            if (list.Count == 1 && headId != tailId)
+            {
+                return false;
+            } // one element but different head & tail
+            if (!list.ContainsKey(headId) || !list.ContainsKey(tailId))
+            {
+                return false;
+            } // head / tail not in list
+
+            int count = 0;
+            string ptr = headId;
+            string prevPtr = "";
+            while (true)
+            {
+                count++;
+                if (count > list.Count)
+                {
+                    return false;
+                } // loop
+
+                if (list.TryGetValue(ptr, out var node))
+                {
+                    if (node.PrevLetterId != prevPtr)
+                    {
+                        return false;
+                    } // wrong prev letter id
+                    if (ptr == tailId)
+                    {
+                        if (node.NextLetterId != "")
+                        {
+                            return false;
+                        } // tail shouldn't have next letter id
+                        break;
+                    }
+                    if (node.NextLetterId == "")
+                    {
+                        return false;
+                    } // we havn't reached tail, but no next letter id
+                    prevPtr = ptr;
+                    ptr = node.NextLetterId;
+                }
+                else
+                {
+                    return false;
+                } // id doesn't exist
+            } // walk linked list
+
+            if (count != list.Count)
+            {
+                return false;
+            }
+            return true;
         }
 
         #endregion LocalFunction

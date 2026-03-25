@@ -32,7 +32,6 @@ public static class DictionaryExtensions
         if (dict.TryGetValue(key, out var value))
         {
             updateAction(value);
-            dict[key] = value;
             return true;
         }
         return false;
