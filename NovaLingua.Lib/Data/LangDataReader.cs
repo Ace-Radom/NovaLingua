@@ -78,7 +78,7 @@ public static class LangDataReader
             string notFoundPartListString = string.Join(", ", notFoundPartList);
             throw new LangDataException(LangDataErrorCode.RequiredPartNotFound, notFoundPartListString);
         } // one / some required part(s) not found
-          // check all required parts exist
+        // check all required parts exist
 
         #region MetadataRead
 
@@ -102,6 +102,8 @@ public static class LangDataReader
             ForceWordUnique = metaData.ForceWordUnique,
             ForceWordInflectionGlobalUnique = metaData.ForceWordInflectionGlobalUnique,
             ForceWordDefinitionUnique = metaData.ForceWordDefinitionUnique,
+            MaxConsecutiveVowelsCount = metaData.MaxConsecutiveVowelsCount, // value checked by setter
+            MaxConsecutiveConsonantCount = metaData.MaxConsecutiveConsonantCount, // value checked by setter
             WordCaseInsensitive = metaData.WordCaseInsensitive
         };
 
@@ -162,7 +164,7 @@ public static class LangDataReader
                 PrevLetterId = letter.PrevLetterId,
                 NextLetterId = letter.NextLetterId,
                 Comment = letter.Comment,
-                MaxCountInWord = letter.MaxCountInWord,
+                MaxInWordCount = letter.MaxInWordCount, // value checked by setter
                 PlacementRule = letter.PlacementRule.ToLetterPlacementRule() switch
                 {
                     LetterPlacementRule.Unknown => throw new LangDataException(
@@ -270,8 +272,6 @@ public static class LangDataReader
         } // illegal letter linked list
 
         #endregion AlphabetRead
-
-        // TODO: check function (read alphabet)
 
         // TODO: check parts format
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace NovaLingua.Lib.Data.DataStructures.Json;
 
@@ -20,9 +21,11 @@ internal class MetaData : IJsonDataStructure<MetaData>
     public required bool ForceWordInflectionGlobalUnique { get; set; }
     // one inflection of a word cannot be same as another word (or its inflections)
     public required bool ForceWordDefinitionUnique { get; set; }
+    public required int MaxConsecutiveVowelsCount { get; set; }
+    public required int MaxConsecutiveConsonantCount { get; set; }
     public required bool WordCaseInsensitive { get; set; }
 
-
+    [JsonIgnore]
     public bool IsEmpty => Version < 0;
     public static MetaData Empty => new()
     {
@@ -36,6 +39,8 @@ internal class MetaData : IJsonDataStructure<MetaData>
         ForceWordUnique = false,
         ForceWordInflectionGlobalUnique = false,
         ForceWordDefinitionUnique = false,
+        MaxConsecutiveVowelsCount = -1,
+        MaxConsecutiveConsonantCount = -1,
         WordCaseInsensitive = false
     };
     public static string TypeName => nameof(MetaData);
@@ -48,6 +53,7 @@ internal class AlphabetData : IJsonDataStructure<AlphabetData>
     public required string HeadLetterId { get; set; }
     public required string TailLetterId { get; set; }
 
+    [JsonIgnore]
     public bool IsEmpty => Version < 0;
     public static AlphabetData Empty => new()
     {
@@ -73,7 +79,7 @@ internal class LetterData
     public required string HeadVariantId { get; set; }
     public required string TailVariantId { get; set; }
 
-    public required int MaxCountInWord { get; set; }
+    public required int MaxInWordCount { get; set; }
     public required int PlacementRule { get; set; }
     public required bool AllowInAutoGeneration { get; set; }
     public required int AutoGenerationRate { get; set; }
@@ -98,6 +104,7 @@ internal class WordListData : IJsonDataStructure<WordListData>
     public required int Version { get; set; }
     public required List<WordData> Words { get; set; }
 
+    [JsonIgnore]
     public bool IsEmpty => Version < 0;
     public static WordListData Empty => new()
     {
@@ -142,6 +149,7 @@ internal class TodoListData : IJsonDataStructure<TodoListData>
     public required List<TodoLabelData> Labels { get; set; }
     public required List<TodoData> Todos { get; set; }
 
+    [JsonIgnore]
     public bool IsEmpty => Version < 0;
     public static TodoListData Empty => new()
     {

@@ -10,7 +10,11 @@ public class LangDataLetter : AbstractLangDataLetter
     public string HeadVariantId { get; set; } = "";
     public string TailVariantId { get; set; } = "";
 
-    public int MaxCountInWord { get; set; }
+    public int MaxInWordCount
+    {
+        get => _maxInWordCount;
+        set => _maxInWordCount = Math.Max(1, value);
+    }
     public LetterPlacementRule PlacementRule { get; set; }
     public bool AllowInAutoGeneration { get; set; }
     public int AutoGenerationRate
@@ -19,5 +23,6 @@ public class LangDataLetter : AbstractLangDataLetter
         set => _autoGenerationRate = Math.Clamp(value, 1, 16);
     }
 
+    private int _maxInWordCount;
     private int _autoGenerationRate;
 }
