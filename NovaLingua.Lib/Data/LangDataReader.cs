@@ -72,8 +72,8 @@ public static class LangDataReader
             }
         }
 
-        var notFoundPartList = GetNotFoundPartList().ToArray();
-        if (notFoundPartList.Length != 0)
+        var notFoundPartList = GetNotFoundPartNames().ToList();
+        if (notFoundPartList.Count != 0)
         {
             string notFoundPartListString = string.Join(", ", notFoundPartList);
             throw new LangDataException(LangDataErrorCode.RequiredPartNotFound, notFoundPartListString);
@@ -273,6 +273,16 @@ public static class LangDataReader
 
         #endregion AlphabetRead
 
+        #region TodoListRead
+
+        data.Todos = todoListData.Todos.Select(v => new LangDataTodo()
+        {
+            Msg = v.Msg,
+            AddTimeTs = v.AddTimeTs // value checked by setter
+        }).OrderBy(v => v.AddTimeTs).ThenBy(v => v.Msg).ToList();
+
+        #endregion TodoListRead
+
         // TODO: check parts format
 
         return data;
@@ -369,7 +379,7 @@ public static class LangDataReader
             }
         }
 
-        IEnumerable<string> GetNotFoundPartList()
+        IEnumerable<string> GetNotFoundPartNames()
         {
             if (metaData.IsEmpty) yield return MetaData.TypeName;
             if (alphabetData.IsEmpty) yield return AlphabetData.TypeName;

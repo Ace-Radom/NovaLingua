@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NovaLingua.Lib.Data.DataStructures;
 
 namespace NovaLingua.Lib.Data;
@@ -34,6 +31,7 @@ public class LangData
         WordCaseInsensitive = true
     };
     public LangDataAlphabet Alphabet { get; set; } = new();
+    public List<LangDataTodo> Todos { get; set; } = [];
 
     private long _createTimeTs;
     private long _lastModifyTimeTs;

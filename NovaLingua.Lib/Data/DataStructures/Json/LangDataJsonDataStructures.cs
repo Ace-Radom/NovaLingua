@@ -146,7 +146,6 @@ internal class WordLetterData
 internal class TodoListData : IJsonDataStructure<TodoListData>
 {
     public required int Version { get; set; }
-    public required List<TodoLabelData> Labels { get; set; }
     public required List<TodoData> Todos { get; set; }
 
     [JsonIgnore]
@@ -154,24 +153,13 @@ internal class TodoListData : IJsonDataStructure<TodoListData>
     public static TodoListData Empty => new()
     {
         Version = -1,
-        Labels = [],
         Todos = []
     };
     public static string TypeName => nameof(TodoListData);
 }
 
-internal class TodoLabelData
-{
-    public required string Id { get; set; }
-    public required string Title { get; set; }
-    public required string Description { get; set; }
-    public required long AddTimeTs { get; set; }
-}
-
 internal class TodoData
 {
     public required string Msg { get; set; }
-    public string LabelId { get; set; } = "";
-    public int Color { get; set; } = -1;
     public required long AddTimeTs { get; set; }
 }
