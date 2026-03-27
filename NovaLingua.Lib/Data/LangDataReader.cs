@@ -30,6 +30,8 @@ public static class LangDataReader
         var wordListData = WordListData.Empty;
         var todoListData = TodoListData.Empty;
 
+        #region ZipArchiveRead
+
         foreach (var entry in zipArchive.Entries)
         {
             if (string.IsNullOrEmpty(entry.Name))
@@ -80,6 +82,8 @@ public static class LangDataReader
         } // one / some required part(s) not found
         // check all required parts exist
 
+        #endregion ZipArchiveRead
+
         #region MetadataRead
 
         data.LangName = metaData.LangName;
@@ -117,7 +121,7 @@ public static class LangDataReader
         foreach (var letter in alphabetData.Letters)
         {
             var id = letter.Id;
-            if (data.Alphabet.Letters.ContainsKey(id))
+            if (data.Alphabet.ContainsKey(id))
             {
                 throw new LangDataException(LangDataErrorCode.IdCollision,
                     AlphabetData.TypeName, "Letters", id
@@ -161,8 +165,6 @@ public static class LangDataReader
                 },
                 Letter = thisLetter,
                 LetterUppercase = thisLetterUppercase,
-                PrevLetterId = letter.PrevLetterId,
-                NextLetterId = letter.NextLetterId,
                 Comment = letter.Comment,
                 MaxInWordCount = letter.MaxInWordCount, // value checked by setter
                 PlacementRule = letter.PlacementRule.ToLetterPlacementRule() switch
@@ -237,41 +239,55 @@ public static class LangDataReader
                 {
                     Letter = thisVariant,
                     LetterUppercase = thisVariantUppercase,
-                    PrevLetterId = variant.PrevLetterId,
-                    NextLetterId = variant.NextLetterId,
                     Comment = variant.Comment,
                     AddTimeTs = variant.AddTimeTs // value checked by setter
                 };
 
-                thisLetterData.Variants.Add(vid, thisVowelVariantData);
+                if (!thisLetterData.Variants.TryAddTail(vid, thisVowelVariantData))
+                {
+                    throw new LangDataException(LangDataErrorCode.Unexpected,
+                        AlphabetData.TypeName, $"Failed to add variant [id={id}, vid={vid}]"
+                    );
+                    // this should never happen
+                } // insert node failed
             } // read variants
 
             #endregion VariantsRead
 
-            thisLetterData.HeadVariantId = letter.HeadVariantId;
-            thisLetterData.TailVariantId = letter.TailVariantId;
-            if (!CheckLetterLinkedList(thisLetterData.HeadVariantId, thisLetterData.TailVariantId, thisLetterData.Variants))
+            if (!thisLetterData.Variants.Check(setOrder: true))
             {
                 throw new LangDataException(LangDataErrorCode.InvalidValue,
                     AlphabetData.TypeName, $"Letters/{id}/Variants", "Illegal Linked List"
                 );
             } // illegal variant linked list
+            // check variants double linked hash map
 
-            data.Alphabet.Letters.Add(id, thisLetterData);
+            if (!data.Alphabet.TryAddTail(id, thisLetterData))
+            {
+                throw new LangDataException(LangDataErrorCode.Unexpected,
+                    AlphabetData.TypeName, $"Failed to add letter [id={id}]"
+                );
+                // this should never happen
+            } // insert node failed
         } // read letters
 
         #endregion LettersRead
 
-        data.Alphabet.HeadLetterId = alphabetData.HeadLetterId;
-        data.Alphabet.TailLetterId = alphabetData.TailLetterId;
-        if (!CheckLetterLinkedList(data.Alphabet.HeadLetterId, data.Alphabet.TailLetterId, data.Alphabet.Letters))
+        if (!data.Alphabet.Check(setOrder: true))
         {
             throw new LangDataException(LangDataErrorCode.InvalidValue,
                 AlphabetData.TypeName, $"Letters", "Illegal Linked List"
             );
         } // illegal letter linked list
+        // check letters double linked hash map
 
         #endregion AlphabetRead
+
+        #region WordListRead
+
+
+
+        #endregion WordListRead
 
         #region TodoListRead
 
@@ -385,70 +401,6 @@ public static class LangDataReader
             if (alphabetData.IsEmpty) yield return AlphabetData.TypeName;
             if (wordListData.IsEmpty) yield return WordListData.TypeName;
             if (todoListData.IsEmpty) yield return TodoListData.TypeName;
-        }
-
-        static bool CheckLetterLinkedList<T>(string headId, string tailId, Dictionary<string, T> list) where T : AbstractLangDataLetter
-        {
-            if (list.Count == 0)
-            {
-                return true;
-            } // empty list
-            if (headId == "" || tailId == "")
-            {
-                return false;
-            } // list not empty but head / tail not specified
-            if (list.Count == 1 && headId != tailId)
-            {
-                return false;
-            } // one element but different head & tail
-            if (!list.ContainsKey(headId) || !list.ContainsKey(tailId))
-            {
-                return false;
-            } // head / tail not in list
-
-            int count = 0;
-            string ptr = headId;
-            string prevPtr = "";
-            while (true)
-            {
-                count++;
-                if (count > list.Count)
-                {
-                    return false;
-                } // loop
-
-                if (list.TryGetValue(ptr, out var node))
-                {
-                    if (node.PrevLetterId != prevPtr)
-                    {
-                        return false;
-                    } // wrong prev letter id
-                    if (ptr == tailId)
-                    {
-                        if (node.NextLetterId != "")
-                        {
-                            return false;
-                        } // tail shouldn't have next letter id
-                        break;
-                    }
-                    if (node.NextLetterId == "")
-                    {
-                        return false;
-                    } // we havn't reached tail, but no next letter id
-                    prevPtr = ptr;
-                    ptr = node.NextLetterId;
-                }
-                else
-                {
-                    return false;
-                } // id doesn't exist
-            } // walk linked list
-
-            if (count != list.Count)
-            {
-                return false;
-            }
-            return true;
         }
 
         #endregion LocalFunction

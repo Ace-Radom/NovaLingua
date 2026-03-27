@@ -30,7 +30,7 @@ public class LangData
         ForceWordDefinitionUnique = false,
         WordCaseInsensitive = true
     };
-    public LangDataAlphabet Alphabet { get; set; } = new();
+    public DoubleLinkedHashMap<string, LangDataLetter> Alphabet { get; set; } = new();
     public List<LangDataTodo> Todos { get; set; } = [];
 
     private long _createTimeTs;

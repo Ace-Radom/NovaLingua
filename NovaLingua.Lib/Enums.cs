@@ -2,21 +2,21 @@
 
 public enum LetterPlacementRule
 {
-    NoRule = 0,
+    Unknown = 0,
+    NoRule,
     InitialOnly,
     FinalOnly,
     InitialFinalOnly,
     NotInitial,
     NotFinal,
-    NotInitialFinal,
-    Unknown = 999
+    NotInitialFinal
 }
 
 public enum LetterType
 {
-    Vowel = 0,
-    Consonant,
-    Unknown = 999
+    Unknown = 0,
+    Vowel,
+    Consonant
 }
 
 public enum LocalLanguage

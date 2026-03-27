@@ -50,17 +50,13 @@ internal class AlphabetData : IJsonDataStructure<AlphabetData>
 {
     public required int Version { get; set; }
     public required List<LetterData> Letters { get; set; }
-    public required string HeadLetterId { get; set; }
-    public required string TailLetterId { get; set; }
 
     [JsonIgnore]
     public bool IsEmpty => Version < 0;
     public static AlphabetData Empty => new()
     {
         Version = -1,
-        Letters = [],
-        HeadLetterId = "",
-        TailLetterId = ""
+        Letters = []
     };
     public static string TypeName => nameof(AlphabetData);
 }
@@ -71,13 +67,9 @@ internal class LetterData
     public required int Type { get; set; }
     public required string Letter { get; set; }
     public required string LetterUppercase { get; set; }
-    public required string PrevLetterId { get; set; }
-    public required string NextLetterId { get; set; }
     public string Comment { get; set; } = "";
     public required List<LetterVariantData> Variants { get; set; }
     // variants are special forms of a letter, they share max count & have the same placement rule
-    public required string HeadVariantId { get; set; }
-    public required string TailVariantId { get; set; }
 
     public required int MaxInWordCount { get; set; }
     public required int PlacementRule { get; set; }
@@ -93,8 +85,6 @@ internal class LetterVariantData
     // when referencing variants in words, use `root-id`-`variant-id`
     public required string Letter { get; set; }
     public required string LetterUppercase { get; set; }
-    public required string PrevLetterId { get; set; }
-    public required string NextLetterId { get; set; }
     public string Comment { get; set; } = "";
     public required long AddTimeTs { get; set; }
 }
@@ -118,8 +108,7 @@ internal class WordData
 {
     public required string Id { get; set; }
     public required List<WordLetterData> Letters { get; set; }
-    public required int Type { get; set; }
-    public required List<string> Definitions { get; set; }
+    public required List<WordDefinitionData> Definitions { get; set; }
     // there can be multiple defs
     public string Comment { get; set; } = "";
     public required List<WordInflectionData> Inflections { get; set; }
@@ -130,9 +119,6 @@ internal class WordInflectionData
 {
     public required string Id { get; set; }
     public required List<WordLetterData> Letters { get; set; }
-    public required int Type { get; set; }
-    // normally it should be same as the root word
-    public required List<string> Definitions { get; set; }
     public string Comment { get; set; } = "";
     public required long AddTimeTs { get; set; }
 }
@@ -140,7 +126,13 @@ internal class WordInflectionData
 internal class WordLetterData
 {
     public required string LetterId { get; set; }
-    public required bool UseUpper { get; set; }
+    public required bool UseUppercase { get; set; }
+}
+
+internal class WordDefinitionData
+{
+    public required int Class { get; set; }
+    public required string Definition { get; set; }
 }
 
 internal class TodoListData : IJsonDataStructure<TodoListData>

@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace NovaLingua.Lib.Data.DataStructures;
 
 public class LangDataLetter : AbstractLangDataLetter
 {
     public LetterType Type { get; set; }
-    public Dictionary<string, LangDataLetterVariant> Variants { get; set; } = [];
-    public string HeadVariantId { get; set; } = "";
-    public string TailVariantId { get; set; } = "";
+    public DoubleLinkedHashMap<string, LangDataLetterVariant> Variants { get; set; } = new();
 
     public int MaxInWordCount
     {
