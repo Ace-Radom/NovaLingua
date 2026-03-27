@@ -5,7 +5,7 @@ namespace NovaLingua.Lib.Data.DataStructures;
 
 public class DoubleLinkedHashMap<TKey, TValue>
     where TKey : class
-    where TValue : class, IDoubleLinkedHashMapNode<TKey>
+    where TValue : AbstractDoubleLinkedHashMapNode<TKey>
 {
     public TKey? Head { get; private set; } = null;
     public TKey? Tail { get; private set; } = null;

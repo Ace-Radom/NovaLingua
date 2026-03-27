@@ -1,6 +1,6 @@
 ﻿namespace NovaLingua.Lib.Data.DataStructures;
 
-public interface IDoubleLinkedHashMapNode<T> where T : class
+public abstract class AbstractDoubleLinkedHashMapNode<T> where T : class
 {
     public T? Prev { get; set; }
     public T? Next { get; set; }
