@@ -109,6 +109,8 @@ public class DoubleLinkedHashMap<TKey, TValue>
         return Check(setOrder);
     }
 
+    public bool ContainsKey(TKey key) => Nodes.ContainsKey(key);
+
     public bool TryAdd(TKey key, TKey prevKey, TKey nextKey, TValue value)
     {
         if (!CheckIfNeeded())
@@ -264,6 +266,27 @@ public class DoubleLinkedHashMap<TKey, TValue>
             throw new InvalidOperationException("DoubleLinkedHashMap.TryAddTail(): tail key doesn't exist in an unempty map after successful check");
             // this should never happen
         } // tail key doesn't exist
+    }
+
+    public bool TryRawAddNoCheck(TKey key, TValue value)
+    {
+        _isChecked = false;
+
+        return Nodes.TryAdd(key, value);
+    }
+
+    public void SetHeadNoCheck(TKey key)
+    {
+        _isChecked = false;
+        Head = key;
+        return;
+    }
+
+    public void SetTailNoCheck(TKey key)
+    {
+        _isChecked = false;
+        Tail = key;
+        return;
     }
 
     private bool TryInsertNoCheck(TKey key, TKey prevKey, TValue prev, TKey nextKey, TValue next, TValue value)
