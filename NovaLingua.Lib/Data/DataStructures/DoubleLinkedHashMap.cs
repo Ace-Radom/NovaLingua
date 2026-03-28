@@ -268,25 +268,22 @@ public class DoubleLinkedHashMap<TKey, TValue>
         } // tail key doesn't exist
     }
 
-    public bool TryRawAddNoCheck(TKey key, TValue value)
+    public bool TryGetValue(TKey key, out TValue value)
     {
-        _isChecked = false;
-
-        return Nodes.TryAdd(key, value);
-    }
-
-    public void SetHeadNoCheck(TKey key)
-    {
-        _isChecked = false;
-        Head = key;
-        return;
-    }
-
-    public void SetTailNoCheck(TKey key)
-    {
-        _isChecked = false;
-        Tail = key;
-        return;
+        if (!CheckIfNeeded())
+        {
+            value = default!;
+            return false;
+        }
+        if (Nodes.TryGetValue(key, out var node))
+        {
+            value = node;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private bool TryInsertNoCheck(TKey key, TKey prevKey, TValue prev, TKey nextKey, TValue next, TValue value)

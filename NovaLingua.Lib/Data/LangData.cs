@@ -31,6 +31,7 @@ public class LangData
         WordCaseInsensitive = true
     };
     public DoubleLinkedHashMap<string, LangDataLetter> Alphabet { get; set; } = new();
+    public DoubleLinkedHashMap<string, LangDataWord> WordList { get; set; } = new();
     public List<LangDataTodo> Todos { get; set; } = [];
 
     private long _createTimeTs;

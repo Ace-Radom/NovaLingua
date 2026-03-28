@@ -8,7 +8,6 @@ public class LangDataConfig
     public bool ForceLetterVariantGlobalUnique { get; set; }
     public bool ForceWordUnique { get; set; }
     public bool ForceWordInflectionGlobalUnique { get; set; }
-    public bool ForceWordDefinitionUnique { get; set; }
     public int MaxConsecutiveVowelsCount
     {
         get => _maxConsecutiveVowelsCount;

@@ -8,6 +8,7 @@ using NovaLingua.Lib.Data.DataStructures;
 using NovaLingua.Lib.Data.DataStructures.Json;
 using NovaLingua.Lib.Exceptions;
 using NovaLingua.Lib.Extensions;
+using static NovaLingua.Lib.Data.DataStructures.AbstractLangDataWord;
 
 namespace NovaLingua.Lib.Data;
 
@@ -105,7 +106,6 @@ public static class LangDataReader
             ForceLetterVariantGlobalUnique = metaData.ForceLetterVariantGlobalUnique,
             ForceWordUnique = metaData.ForceWordUnique,
             ForceWordInflectionGlobalUnique = metaData.ForceWordInflectionGlobalUnique,
-            ForceWordDefinitionUnique = metaData.ForceWordDefinitionUnique,
             MaxConsecutiveVowelsCount = metaData.MaxConsecutiveVowelsCount, // value checked by setter
             MaxConsecutiveConsonantCount = metaData.MaxConsecutiveConsonantCount, // value checked by setter
             WordCaseInsensitive = metaData.WordCaseInsensitive
@@ -285,7 +285,170 @@ public static class LangDataReader
 
         #region WordListRead
 
+        HashSet<string> wordIdSet = [];
+        HashSet<string> wordSet = [];
+        List<(string Id, LangDataWord Node)> wordListTemp = [];
+        foreach (var word in wordListData.Words)
+        {
+            var id = word.Id;
+            if (!wordIdSet.Add(id))
+            {
+                throw new LangDataException(LangDataErrorCode.IdCollision,
+                    WordListData.TypeName, "Words", id
+                );
+            } // id collision
 
+            var thisWordData = new LangDataWord()
+            {
+                Letters = word.Letters.Select((l, index) =>
+                {
+                    var letterId = l.LetterId;
+                    var variantId = l.VariantId;
+                    if (!CheckLetterId(letterId))
+                    {
+                        throw new LangDataException(LangDataErrorCode.InvalidValue,
+                            WordListData.TypeName, $"Words/{id}/Letters/{index}/LetterId", letterId
+                        );
+                    } // invalid letter id
+                    if (!string.IsNullOrEmpty(variantId) && !CheckLetterVariantId(letterId, variantId))
+                    {
+                        throw new LangDataException(LangDataErrorCode.InvalidValue,
+                            WordListData.TypeName, $"Words/{id}/Letters/{index}/VariantId", variantId
+                        );
+                    } // has variant id but invalid
+                    return new Letter()
+                    {
+                        LetterId = letterId,
+                        VariantId = variantId,
+                        UseUppercase = l.UseUppercase
+                    };
+                }).ToList(),
+                Definitions = word.Definitions.Select((d, index) => new LangDataWord.WordDefinition()
+                {
+                    Class = d.Class.ToWordClass() switch
+                    {
+                        WordClass.Unknown => throw new LangDataException(
+                            LangDataErrorCode.InvalidValue,
+                            WordListData.TypeName, $"Words/{id}/Definitions/{index}/Class", d.Class.ToString()
+                        ),
+                        var wordClass => wordClass
+                    },
+                    Definition = d.Definition
+                }).ToList(),
+                Comment = word.Comment,
+                AddTimeTs = word.AddTimeTs,
+            }; // build basic word data
+
+            var thisWordLetterListStr = ConvertLetterListToString(thisWordData.Letters, data.Config.WordCaseInsensitive);
+            if (!wordSet.Add(thisWordLetterListStr))
+            {
+                throw new LangDataException(LangDataErrorCode.DataCollision,
+                    WordListData.TypeName,
+                    $"Words/{id}/Letters", thisWordLetterListStr
+                );
+            } // word collision
+            // check word unique
+
+            // TODO: build word string cache
+
+            #region InflectionsRead
+
+            if (word.Inflections.Count > 0)
+            {
+                var inflectionIdSet = new HashSet<string>();
+                var inflectionSet = new HashSet<string>();
+                var inflectionsListTemp = new List<(string Id, LangDataWordInflection Node)>();
+                foreach (var inflection in word.Inflections)
+                {
+                    var iid = inflection.Id;
+                    if (!inflectionIdSet.Add(iid))
+                    {
+                        throw new LangDataException(LangDataErrorCode.IdCollision,
+                            WordListData.TypeName, $"Words/{id}/Inflections", iid
+                        );
+                    } // inflection id collision
+
+                    var thisInflectionData = new LangDataWordInflection()
+                    {
+                        Letters = inflection.Letters.Select((l, index) =>
+                        {
+                            var letterId = l.LetterId;
+                            var variantId = l.VariantId;
+                            if (!CheckLetterId(letterId))
+                            {
+                                throw new LangDataException(LangDataErrorCode.InvalidValue,
+                                    WordListData.TypeName, $"Words/{id}/Inflections/Letters/{index}/LetterId", letterId
+                                );
+                            } // invalid letter id
+                            if (!string.IsNullOrEmpty(variantId) && !CheckLetterVariantId(letterId, variantId))
+                            {
+                                throw new LangDataException(LangDataErrorCode.InvalidValue,
+                                    WordListData.TypeName, $"Words/{id}/Inflections/Letters/{index}/VariantId", variantId
+                                );
+                            } // has variant id but invalid
+                            return new Letter()
+                            {
+                                LetterId = letterId,
+                                VariantId = variantId,
+                                UseUppercase = l.UseUppercase
+                            };
+                        }).ToList(),
+                        Comment = inflection.Comment,
+                        AddTimeTs = inflection.AddTimeTs,
+                    }; // build inflection data
+
+                    var thisInflectionLetterListStr = ConvertLetterListToString(thisInflectionData.Letters, data.Config.WordCaseInsensitive);
+                    if (!inflectionSet.Add(thisInflectionLetterListStr))
+                    {
+                        throw new LangDataException(LangDataErrorCode.DataCollision,
+                            WordListData.TypeName,
+                            $"Words/{id}/Inflections/{iid}/Letters", thisInflectionLetterListStr
+                        );
+                    } // inflection collision
+                    if (data.Config.ForceWordInflectionGlobalUnique)
+                    {
+                        if (!wordSet.Add(thisInflectionLetterListStr))
+                        {
+                            throw new LangDataException(LangDataErrorCode.DataCollision,
+                                WordListData.TypeName,
+                                $"Words/{id}/Inflections/{iid}/Letters", thisInflectionLetterListStr
+                            );
+                        } // inflection global collision
+                    } // force inflection global unique
+                    // check inflection unique
+
+                    // TODO: build inflection str cache
+
+                    inflectionsListTemp.Add((Id: iid, Node: thisInflectionData));
+                } // walk inflection list
+
+                SortWordListNoCheckThrow(inflectionsListTemp);
+                foreach (var (Id, Node) in inflectionsListTemp)
+                {
+                    if (!thisWordData.Inflections.TryAddTail(Id, Node))
+                    {
+                        throw new LangDataException(LangDataErrorCode.Unexpected,
+                            WordListData.TypeName, $"Failed to add inflection [id={id}, iid={Id}]"
+                        );
+                    }
+                } // insert inflections into word data after sort
+            } // word has inflections
+
+            #endregion InflectionsRead
+
+            wordListTemp.Add((Id: id, Node: thisWordData));
+        } // walk word list
+
+        SortWordListNoCheckThrow(wordListTemp);
+        foreach (var (Id, Node) in wordListTemp)
+        {
+            if (!data.WordList.TryAddTail(Id, Node))
+            {
+                throw new LangDataException(LangDataErrorCode.Unexpected,
+                    WordListData.TypeName, $"Failed to add inflection [id={Id}]"
+                );
+            }
+        } // insert words into data after sort
 
         #endregion WordListRead
 
@@ -402,6 +565,104 @@ public static class LangDataReader
             if (wordListData.IsEmpty) yield return WordListData.TypeName;
             if (todoListData.IsEmpty) yield return TodoListData.TypeName;
         }
+
+        bool CheckLetterId(string id) => (!id.IsValidLetterId() || !data.Alphabet.ContainsKey(id));
+
+        bool CheckLetterVariantId(string letterId, string variantId)
+        {
+            if (!letterId.IsValidLetterId() || !variantId.IsValidLetterId())
+            {
+                return false;
+            } // invalid id(s)
+            if (data.Alphabet.TryGetValue(letterId, out var letterData))
+            {
+                if (!letterData.Variants.ContainsKey(variantId))
+                {
+                    return false;
+                } // variant id doesn't exist
+            }
+            else
+            {
+                return false;
+            } // letter id doesn't exist
+            return true;
+        }
+
+        static string ConvertLetterListToString(List<Letter> letterList, bool caseInsensitive)
+        {
+            var outStr = "";
+            foreach (var letter in letterList)
+            {
+                outStr += letter.LetterId;
+                if (!string.IsNullOrEmpty(letter.VariantId))
+                {
+                    outStr += "-" + letter.VariantId;
+                }
+                if (!caseInsensitive && letter.UseUppercase)
+                {
+                    outStr += "U";
+                }
+                outStr += "|";
+            }
+            return outStr;
+        }
+
+        // Order in double linked hash map should be set before calling this
+        void SortWordListNoCheckThrow<T>(List<(string Id, T Word)> wordList) where T : AbstractLangDataWord => wordList.Sort((a, b) =>
+            {
+                var letterListA = a.Word.Letters;
+                var letterListB = b.Word.Letters;
+
+                int minLength = Math.Min(letterListA.Count, letterListB.Count);
+                for (int i = 0; i < minLength; i++)
+                {
+                    var idA = letterListA[i].LetterId;
+                    var idB = letterListB[i].LetterId;
+                    if (idA == idB)
+                    {
+                        var vidA = letterListA[i].VariantId;
+                        var vidB = letterListB[i].VariantId;
+                        if (vidA == vidB)
+                        {
+                            continue;
+                        } // same letter, same variant
+
+                        if (data.Alphabet.TryGetValue(idA, out var letterData))
+                        {
+                            uint rankA = letterData.Variants.TryGetValue(vidA, out var variantAData) ? variantAData.Order
+                                : throw new LangDataException(LangDataErrorCode.Unexpected,
+                                    WordListData.TypeName, $"Failed to get letter variant data when sorting word list [id={idA}, vid={vidA}]"
+                            );
+                            uint rankB = letterData.Variants.TryGetValue(vidB, out var variantBData) ? variantBData.Order
+                                : throw new LangDataException(LangDataErrorCode.Unexpected,
+                                    WordListData.TypeName, $"Failed to get letter variant data when sorting word list [id={idA}, vid={vidB}]"
+                            );
+                            return rankA.CompareTo(rankB);
+                        }
+                        else
+                        {
+                            throw new LangDataException(LangDataErrorCode.Unexpected,
+                                WordListData.TypeName, $"Failed to get letter data when sorting word list [id={idA}]"
+                            );
+                        } // failed to get letter data
+                    } // same letter
+                    else
+                    {
+                        uint rankA = data.Alphabet.TryGetValue(idA, out var letterAData) ? letterAData.Order
+                            : throw new LangDataException(LangDataErrorCode.Unexpected,
+                                WordListData.TypeName, $"Failed to get letter data when sorting word list [id={idA}]"
+                        );
+                        uint rankB = data.Alphabet.TryGetValue(idB, out var letterBData) ? letterBData.Order
+                            : throw new LangDataException(LangDataErrorCode.Unexpected,
+                                WordListData.TypeName, $"Failed to get letter data when sorting word list [id={idB}]"
+                        );
+                        return rankA.CompareTo(rankB);
+                    } // different letter
+                }
+
+                return letterListA.Count.CompareTo(letterListB.Count);
+                // all letters before MinLength pos are same, shorter one first
+            });
 
         #endregion LocalFunction
     }

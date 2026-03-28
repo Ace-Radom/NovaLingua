@@ -31,3 +31,30 @@ public enum LocalLanguage
     French,
     Others = 999
 }
+
+public enum WordClass
+{
+    Unknown = 0,
+    Noun,
+    ProperNoun,
+    Verb,
+    AuxiliaryVerb,
+    ModalVerb,
+    Adjective,
+    Adverb,
+    Number,
+    OrdinalNumber,
+    CardinalNumber,
+    Pronoun,
+    Preposition,
+    Conjunction,
+    Interjection,
+    Particle,
+    Article,
+    Determiner,
+    Onomatopoeia,
+    MesureWord,
+    Locative,
+    AspectMarker,
+    Others = 999
+}

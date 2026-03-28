@@ -20,7 +20,6 @@ internal class MetaData : IJsonDataStructure<MetaData>
     public required bool ForceWordUnique { get; set; }
     public required bool ForceWordInflectionGlobalUnique { get; set; }
     // one inflection of a word cannot be same as another word (or its inflections)
-    public required bool ForceWordDefinitionUnique { get; set; }
     public required int MaxConsecutiveVowelsCount { get; set; }
     public required int MaxConsecutiveConsonantCount { get; set; }
     public required bool WordCaseInsensitive { get; set; }
@@ -38,7 +37,6 @@ internal class MetaData : IJsonDataStructure<MetaData>
         ForceLetterVariantGlobalUnique = false,
         ForceWordUnique = false,
         ForceWordInflectionGlobalUnique = false,
-        ForceWordDefinitionUnique = false,
         MaxConsecutiveVowelsCount = -1,
         MaxConsecutiveConsonantCount = -1,
         WordCaseInsensitive = false
@@ -126,6 +124,7 @@ internal class WordInflectionData
 internal class WordLetterData
 {
     public required string LetterId { get; set; }
+    public required string VariantId { get; set; }
     public required bool UseUppercase { get; set; }
 }
 
