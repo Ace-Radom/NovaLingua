@@ -17,7 +17,6 @@ internal class MetaData : IJsonDataStructure<MetaData>
     public required bool AutoGenerationUseVariants { get; set; }
     public required bool ForceLetterVariantGlobalUnique { get; set; }
     // one variant of a letter cannot be same as another letter (or its upper & variants)
-    public required bool ForceWordUnique { get; set; }
     public required bool ForceWordInflectionGlobalUnique { get; set; }
     // one inflection of a word cannot be same as another word (or its inflections)
     public required int MaxConsecutiveVowelsCount { get; set; }
@@ -35,7 +34,6 @@ internal class MetaData : IJsonDataStructure<MetaData>
         LastModifyTimeTs = -1,
         AutoGenerationUseVariants = false,
         ForceLetterVariantGlobalUnique = false,
-        ForceWordUnique = false,
         ForceWordInflectionGlobalUnique = false,
         MaxConsecutiveVowelsCount = -1,
         MaxConsecutiveConsonantCount = -1,

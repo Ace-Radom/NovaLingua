@@ -30,7 +30,6 @@ public class LangData
     {
         AutoGenerationUseVariants = false,
         ForceLetterVariantGlobalUnique = true,
-        ForceWordUnique = true,
         ForceWordInflectionGlobalUnique = true,
         WordCaseInsensitive = true
     };

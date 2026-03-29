@@ -104,7 +104,6 @@ public static class LangDataReader
         {
             AutoGenerationUseVariants = metaData.AutoGenerationUseVariants,
             ForceLetterVariantGlobalUnique = metaData.ForceLetterVariantGlobalUnique,
-            ForceWordUnique = metaData.ForceWordUnique,
             ForceWordInflectionGlobalUnique = metaData.ForceWordInflectionGlobalUnique,
             MaxConsecutiveVowelsCount = metaData.MaxConsecutiveVowelsCount, // value checked by setter
             MaxConsecutiveConsonantCount = metaData.MaxConsecutiveConsonantCount, // value checked by setter
@@ -303,7 +302,7 @@ public static class LangDataReader
                 {
                     LetterId = l.LetterId,
                     VariantId = l.VariantId,
-                        UseUppercase = l.UseUppercase
+                    UseUppercase = l.UseUppercase
                 }).ToList(),
                 Definitions = word.Definitions.Select((d, index) => new LangDataWord.WordDefinition()
                 {
@@ -343,7 +342,7 @@ public static class LangDataReader
                         {
                             LetterId = l.LetterId,
                             VariantId = l.VariantId,
-                                UseUppercase = l.UseUppercase
+                            UseUppercase = l.UseUppercase
                         }).ToList(),
                         Comment = inflection.Comment,
                         AddTimeTs = inflection.AddTimeTs,
@@ -361,11 +360,11 @@ public static class LangDataReader
             #endregion InflectionsRead
 
             if (!data.WordList.TryAddTail(id, thisWordData))
-                    {
-                        throw new LangDataException(LangDataErrorCode.Unexpected,
+            {
+                throw new LangDataException(LangDataErrorCode.Unexpected,
                     WordListData.TypeName, $"Failed to add inflection [id={id}]"
-                        );
-                    }
+                );
+            }
         } // walk word list
 
         if (!data.CheckWordList())
@@ -382,10 +381,10 @@ public static class LangDataReader
             );
         } // sort word list
         if (!data.UpdateAllWordsStringPreview())
-            {
-                throw new LangDataException(LangDataErrorCode.Unexpected,
+        {
+            throw new LangDataException(LangDataErrorCode.Unexpected,
                 WordListData.TypeName, "Failed to update all words string preview after successful check"
-                );
+            );
         } // update all words' string preview
 
         #endregion WordListRead
