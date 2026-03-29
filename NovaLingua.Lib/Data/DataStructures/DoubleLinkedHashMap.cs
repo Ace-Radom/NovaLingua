@@ -92,7 +92,7 @@ public class DoubleLinkedHashMap<TKey, TValue>
         {
             for (int i = 0; i < validPath.Count; i++)
             {
-                validPath[i].Order = (uint)i;
+                validPath[i].Order = i;
             }
         } // set order if needed
 
@@ -282,6 +282,7 @@ public class DoubleLinkedHashMap<TKey, TValue>
         }
         else
         {
+            value = default!;
             return false;
         }
     }
