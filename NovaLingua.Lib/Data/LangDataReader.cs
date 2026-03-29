@@ -285,9 +285,9 @@ public static class LangDataReader
 
         #region WordListRead
 
-        HashSet<string> wordIdSet = [];
-        HashSet<string> wordSet = [];
-        List<(string Id, LangDataWord Node)> wordListTemp = [];
+        var wordIdSet = new HashSet<string>();
+        var wordSet = new HashSet<string>();
+        var wordListTemp = new List<(string Id, LangDataWord Node)>();
         foreach (var word in wordListData.Words)
         {
             var id = word.Id;
@@ -566,7 +566,7 @@ public static class LangDataReader
             if (todoListData.IsEmpty) yield return TodoListData.TypeName;
         }
 
-        bool CheckLetterId(string id) => (!id.IsValidLetterId() || !data.Alphabet.ContainsKey(id));
+        bool CheckLetterId(string id) => (id.IsValidLetterId() && data.Alphabet.ContainsKey(id));
 
         bool CheckLetterVariantId(string letterId, string variantId)
         {
@@ -629,14 +629,25 @@ public static class LangDataReader
 
                         if (data.Alphabet.TryGetValue(idA, out var letterData))
                         {
-                            uint rankA = letterData.Variants.TryGetValue(vidA, out var variantAData) ? variantAData.Order
+
+                            #region LocalFunction
+
+                            int GetVariantRank(string vid)
+                            {
+                                if (string.IsNullOrEmpty(vid))
+                                {
+                                    return -1;
+                                }
+                                return letterData.Variants.TryGetValue(vid, out var variantData) ? variantData.Order
                                 : throw new LangDataException(LangDataErrorCode.Unexpected,
-                                    WordListData.TypeName, $"Failed to get letter variant data when sorting word list [id={idA}, vid={vidA}]"
+                                        WordListData.TypeName, $"Failed to get letter variant data when sorting word list [id={idA}, vid={vid}]"
                             );
-                            uint rankB = letterData.Variants.TryGetValue(vidB, out var variantBData) ? variantBData.Order
-                                : throw new LangDataException(LangDataErrorCode.Unexpected,
-                                    WordListData.TypeName, $"Failed to get letter variant data when sorting word list [id={idA}, vid={vidB}]"
-                            );
+                            }
+
+                            #endregion LocalFunction
+
+                            int rankA = GetVariantRank(vidA);
+                            int rankB = GetVariantRank(vidB);
                             return rankA.CompareTo(rankB);
                         }
                         else
@@ -648,14 +659,25 @@ public static class LangDataReader
                     } // same letter
                     else
                     {
-                        uint rankA = data.Alphabet.TryGetValue(idA, out var letterAData) ? letterAData.Order
+
+                        #region LocalFunction
+
+                        int GetRank(string id)
+                        {
+                            if (string.IsNullOrEmpty(id))
+                            {
+                                return -1;
+                            } // for later enhancement, no use for now
+                            return data.Alphabet.TryGetValue(id, out var letterData) ? letterData.Order
                             : throw new LangDataException(LangDataErrorCode.Unexpected,
-                                WordListData.TypeName, $"Failed to get letter data when sorting word list [id={idA}]"
+                                    WordListData.TypeName, $"Failed to get letter data when sorting word list [id={id}]"
                         );
-                        uint rankB = data.Alphabet.TryGetValue(idB, out var letterBData) ? letterBData.Order
-                            : throw new LangDataException(LangDataErrorCode.Unexpected,
-                                WordListData.TypeName, $"Failed to get letter data when sorting word list [id={idB}]"
-                        );
+                        }
+
+                        #endregion LocalFunction
+
+                        int rankA = GetRank(idA);
+                        int rankB = GetRank(idB);
                         return rankA.CompareTo(rankB);
                     } // different letter
                 }

@@ -27,7 +27,6 @@ public class LangData
         ForceLetterVariantGlobalUnique = true,
         ForceWordUnique = true,
         ForceWordInflectionGlobalUnique = true,
-        ForceWordDefinitionUnique = false,
         WordCaseInsensitive = true
     };
     public DoubleLinkedHashMap<string, LangDataLetter> Alphabet { get; set; } = new();
