@@ -100,16 +100,17 @@ public class DoubleLinkedHashMap<TKey, TValue>
         return true;
     }
     
-    public bool CheckIfNeeded(bool setOrder = false)
-    {
-        if (_isChecked)
-        {
-            return true;
-        }
-        return Check(setOrder);
-    }
+    public bool CheckIfNeeded(bool setOrder = false) => _isChecked || Check(setOrder);
 
     public bool ContainsKey(TKey key) => Nodes.ContainsKey(key);
+
+    public void RemoveAll()
+    {
+        Head = null;
+        Tail = null;
+        Nodes.Clear();
+        return;
+    }
 
     public bool TryAdd(TKey key, TKey prevKey, TKey nextKey, TValue value)
     {

@@ -13,7 +13,7 @@ public abstract class AbstractLangDataWord : AbstractDoubleLinkedHashMapNode<str
     }
 
     public List<Letter> Letters { get; set; } = [];
-    public string WordStringCache { get; set; } = "";
+    public string WordStringPreview { get; set; } = "";
     public string Comment { get; set; } = "";
     public long AddTimeTs
     {

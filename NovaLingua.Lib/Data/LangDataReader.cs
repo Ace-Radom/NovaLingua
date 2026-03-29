@@ -286,7 +286,6 @@ public static class LangDataReader
         #region WordListRead
 
         var wordIdSet = new HashSet<string>();
-        var wordSet = new HashSet<string>();
         var wordListTemp = new List<(string Id, LangDataWord Node)>();
         foreach (var word in wordListData.Words)
         {
@@ -300,28 +299,11 @@ public static class LangDataReader
 
             var thisWordData = new LangDataWord()
             {
-                Letters = word.Letters.Select((l, index) =>
+                Letters = word.Letters.Select((l, index) => new Letter()
                 {
-                    var letterId = l.LetterId;
-                    var variantId = l.VariantId;
-                    if (!CheckLetterId(letterId))
-                    {
-                        throw new LangDataException(LangDataErrorCode.InvalidValue,
-                            WordListData.TypeName, $"Words/{id}/Letters/{index}/LetterId", letterId
-                        );
-                    } // invalid letter id
-                    if (!string.IsNullOrEmpty(variantId) && !CheckLetterVariantId(letterId, variantId))
-                    {
-                        throw new LangDataException(LangDataErrorCode.InvalidValue,
-                            WordListData.TypeName, $"Words/{id}/Letters/{index}/VariantId", variantId
-                        );
-                    } // has variant id but invalid
-                    return new Letter()
-                    {
-                        LetterId = letterId,
-                        VariantId = variantId,
+                    LetterId = l.LetterId,
+                    VariantId = l.VariantId,
                         UseUppercase = l.UseUppercase
-                    };
                 }).ToList(),
                 Definitions = word.Definitions.Select((d, index) => new LangDataWord.WordDefinition()
                 {
@@ -339,24 +321,11 @@ public static class LangDataReader
                 AddTimeTs = word.AddTimeTs,
             }; // build basic word data
 
-            var thisWordLetterListStr = ConvertLetterListToString(thisWordData.Letters, data.Config.WordCaseInsensitive);
-            if (!wordSet.Add(thisWordLetterListStr))
-            {
-                throw new LangDataException(LangDataErrorCode.DataCollision,
-                    WordListData.TypeName,
-                    $"Words/{id}/Letters", thisWordLetterListStr
-                );
-            } // word collision
-            // check word unique
-
-            // TODO: build word string cache
-
             #region InflectionsRead
 
             if (word.Inflections.Count > 0)
             {
                 var inflectionIdSet = new HashSet<string>();
-                var inflectionSet = new HashSet<string>();
                 var inflectionsListTemp = new List<(string Id, LangDataWordInflection Node)>();
                 foreach (var inflection in word.Inflections)
                 {
@@ -370,85 +339,54 @@ public static class LangDataReader
 
                     var thisInflectionData = new LangDataWordInflection()
                     {
-                        Letters = inflection.Letters.Select((l, index) =>
+                        Letters = inflection.Letters.Select((l, index) => new Letter()
                         {
-                            var letterId = l.LetterId;
-                            var variantId = l.VariantId;
-                            if (!CheckLetterId(letterId))
-                            {
-                                throw new LangDataException(LangDataErrorCode.InvalidValue,
-                                    WordListData.TypeName, $"Words/{id}/Inflections/Letters/{index}/LetterId", letterId
-                                );
-                            } // invalid letter id
-                            if (!string.IsNullOrEmpty(variantId) && !CheckLetterVariantId(letterId, variantId))
-                            {
-                                throw new LangDataException(LangDataErrorCode.InvalidValue,
-                                    WordListData.TypeName, $"Words/{id}/Inflections/Letters/{index}/VariantId", variantId
-                                );
-                            } // has variant id but invalid
-                            return new Letter()
-                            {
-                                LetterId = letterId,
-                                VariantId = variantId,
+                            LetterId = l.LetterId,
+                            VariantId = l.VariantId,
                                 UseUppercase = l.UseUppercase
-                            };
                         }).ToList(),
                         Comment = inflection.Comment,
                         AddTimeTs = inflection.AddTimeTs,
                     }; // build inflection data
 
-                    var thisInflectionLetterListStr = ConvertLetterListToString(thisInflectionData.Letters, data.Config.WordCaseInsensitive);
-                    if (!inflectionSet.Add(thisInflectionLetterListStr))
-                    {
-                        throw new LangDataException(LangDataErrorCode.DataCollision,
-                            WordListData.TypeName,
-                            $"Words/{id}/Inflections/{iid}/Letters", thisInflectionLetterListStr
-                        );
-                    } // inflection collision
-                    if (data.Config.ForceWordInflectionGlobalUnique)
-                    {
-                        if (!wordSet.Add(thisInflectionLetterListStr))
-                        {
-                            throw new LangDataException(LangDataErrorCode.DataCollision,
-                                WordListData.TypeName,
-                                $"Words/{id}/Inflections/{iid}/Letters", thisInflectionLetterListStr
-                            );
-                        } // inflection global collision
-                    } // force inflection global unique
-                    // check inflection unique
-
-                    // TODO: build inflection str cache
-
-                    inflectionsListTemp.Add((Id: iid, Node: thisInflectionData));
-                } // walk inflection list
-
-                SortWordListNoCheckThrow(inflectionsListTemp);
-                foreach (var (Id, Node) in inflectionsListTemp)
-                {
-                    if (!thisWordData.Inflections.TryAddTail(Id, Node))
+                    if (!thisWordData.Inflections.TryAddTail(iid, thisInflectionData))
                     {
                         throw new LangDataException(LangDataErrorCode.Unexpected,
-                            WordListData.TypeName, $"Failed to add inflection [id={id}, iid={Id}]"
+                            WordListData.TypeName, $"Failed to add inflection [id={id}, iid={iid}]"
                         );
                     }
-                } // insert inflections into word data after sort
+                } // walk inflection
             } // word has inflections
 
             #endregion InflectionsRead
 
-            wordListTemp.Add((Id: id, Node: thisWordData));
+            if (!data.WordList.TryAddTail(id, thisWordData))
+                    {
+                        throw new LangDataException(LangDataErrorCode.Unexpected,
+                    WordListData.TypeName, $"Failed to add inflection [id={id}]"
+                        );
+                    }
         } // walk word list
 
-        SortWordListNoCheckThrow(wordListTemp);
-        foreach (var (Id, Node) in wordListTemp)
+        if (!data.CheckWordList())
         {
-            if (!data.WordList.TryAddTail(Id, Node))
+            throw new LangDataException(LangDataErrorCode.InvalidPartFormat,
+                WordListData.TypeName, "Check word list format failed"
+            );
+            // TODO: detailed errmsg
+        } // invalid word list
+        if (!data.SortWordList())
+        {
+            throw new LangDataException(LangDataErrorCode.Unexpected,
+                WordListData.TypeName, "Failed to sort word list after successful check"
+            );
+        } // sort word list
+        if (!data.UpdateAllWordsStringPreview())
             {
                 throw new LangDataException(LangDataErrorCode.Unexpected,
-                    WordListData.TypeName, $"Failed to add inflection [id={Id}]"
+                WordListData.TypeName, "Failed to update all words string preview after successful check"
                 );
-            }
-        } // insert words into data after sort
+        } // update all words' string preview
 
         #endregion WordListRead
 
@@ -565,126 +503,6 @@ public static class LangDataReader
             if (wordListData.IsEmpty) yield return WordListData.TypeName;
             if (todoListData.IsEmpty) yield return TodoListData.TypeName;
         }
-
-        bool CheckLetterId(string id) => (id.IsValidLetterId() && data.Alphabet.ContainsKey(id));
-
-        bool CheckLetterVariantId(string letterId, string variantId)
-        {
-            if (!letterId.IsValidLetterId() || !variantId.IsValidLetterId())
-            {
-                return false;
-            } // invalid id(s)
-            if (data.Alphabet.TryGetValue(letterId, out var letterData))
-            {
-                if (!letterData.Variants.ContainsKey(variantId))
-                {
-                    return false;
-                } // variant id doesn't exist
-            }
-            else
-            {
-                return false;
-            } // letter id doesn't exist
-            return true;
-        }
-
-        static string ConvertLetterListToString(List<Letter> letterList, bool caseInsensitive)
-        {
-            var outStr = "";
-            foreach (var letter in letterList)
-            {
-                outStr += letter.LetterId;
-                if (!string.IsNullOrEmpty(letter.VariantId))
-                {
-                    outStr += "-" + letter.VariantId;
-                }
-                if (!caseInsensitive && letter.UseUppercase)
-                {
-                    outStr += "U";
-                }
-                outStr += "|";
-            }
-            return outStr;
-        }
-
-        // Order in double linked hash map should be set before calling this
-        void SortWordListNoCheckThrow<T>(List<(string Id, T Word)> wordList) where T : AbstractLangDataWord => wordList.Sort((a, b) =>
-            {
-                var letterListA = a.Word.Letters;
-                var letterListB = b.Word.Letters;
-
-                int minLength = Math.Min(letterListA.Count, letterListB.Count);
-                for (int i = 0; i < minLength; i++)
-                {
-                    var idA = letterListA[i].LetterId;
-                    var idB = letterListB[i].LetterId;
-                    if (idA == idB)
-                    {
-                        var vidA = letterListA[i].VariantId;
-                        var vidB = letterListB[i].VariantId;
-                        if (vidA == vidB)
-                        {
-                            continue;
-                        } // same letter, same variant
-
-                        if (data.Alphabet.TryGetValue(idA, out var letterData))
-                        {
-
-                            #region LocalFunction
-
-                            int GetVariantRank(string vid)
-                            {
-                                if (string.IsNullOrEmpty(vid))
-                                {
-                                    return -1;
-                                }
-                                return letterData.Variants.TryGetValue(vid, out var variantData) ? variantData.Order
-                                : throw new LangDataException(LangDataErrorCode.Unexpected,
-                                        WordListData.TypeName, $"Failed to get letter variant data when sorting word list [id={idA}, vid={vid}]"
-                            );
-                            }
-
-                            #endregion LocalFunction
-
-                            int rankA = GetVariantRank(vidA);
-                            int rankB = GetVariantRank(vidB);
-                            return rankA.CompareTo(rankB);
-                        }
-                        else
-                        {
-                            throw new LangDataException(LangDataErrorCode.Unexpected,
-                                WordListData.TypeName, $"Failed to get letter data when sorting word list [id={idA}]"
-                            );
-                        } // failed to get letter data
-                    } // same letter
-                    else
-                    {
-
-                        #region LocalFunction
-
-                        int GetRank(string id)
-                        {
-                            if (string.IsNullOrEmpty(id))
-                            {
-                                return -1;
-                            } // for later enhancement, no use for now
-                            return data.Alphabet.TryGetValue(id, out var letterData) ? letterData.Order
-                            : throw new LangDataException(LangDataErrorCode.Unexpected,
-                                    WordListData.TypeName, $"Failed to get letter data when sorting word list [id={id}]"
-                        );
-                        }
-
-                        #endregion LocalFunction
-
-                        int rankA = GetRank(idA);
-                        int rankB = GetRank(idB);
-                        return rankA.CompareTo(rankB);
-                    } // different letter
-                }
-
-                return letterListA.Count.CompareTo(letterListB.Count);
-                // all letters before MinLength pos are same, shorter one first
-            });
 
         #endregion LocalFunction
     }
