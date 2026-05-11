@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
 	<Version>0.0.1</Version>
 	<FileVersion>0.0.1</FileVersion>
+	<UseWindowsForms>True</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,13 +8,12 @@ using NovaLingua.Lib.Data.DataStructures;
 using NovaLingua.Lib.Data.DataStructures.Json;
 using NovaLingua.Lib.Exceptions;
 using NovaLingua.Lib.Extensions;
-using static NovaLingua.Lib.Data.DataStructures.AbstractLangDataWord;
 
 namespace NovaLingua.Lib.Data;
 
-public static class LangDataReader
+public class LangDataReader()
 {
-    public static LangData ReadNld(string zipFilePath)
+    public LangData ReadNld(string zipFilePath)
     {
         var data = new LangData();
 
@@ -298,7 +297,7 @@ public static class LangDataReader
 
             var thisWordData = new LangDataWord()
             {
-                Letters = word.Letters.Select((l, index) => new Letter()
+                Letters = word.Letters.Select((l, index) => new AbstractLangDataWord.Letter()
                 {
                     LetterId = l.LetterId,
                     VariantId = l.VariantId,
@@ -338,7 +337,7 @@ public static class LangDataReader
 
                     var thisInflectionData = new LangDataWordInflection()
                     {
-                        Letters = inflection.Letters.Select((l, index) => new Letter()
+                        Letters = inflection.Letters.Select((l, index) => new AbstractLangDataWord.Letter()
                         {
                             LetterId = l.LetterId,
                             VariantId = l.VariantId,
