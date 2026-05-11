@@ -4,8 +4,10 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+	<Version>0.0.1</Version>
+	<FileVersion>0.0.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
