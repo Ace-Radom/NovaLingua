@@ -10,12 +10,12 @@ public class LangDataConfig
     public int MaxConsecutiveVowelsCount
     {
         get => _maxConsecutiveVowelsCount;
-        set => _maxConsecutiveVowelsCount = Math.Max(1, value);
+        set => _maxConsecutiveVowelsCount = value == -1 ? -1 : Math.Max(1, value);
     }
     public int MaxConsecutiveConsonantCount
     {
         get => _maxConsecutiveConsonantCount;
-        set => _maxConsecutiveConsonantCount = Math.Max(1, value);
+        set => _maxConsecutiveConsonantCount = value == -1 ? -1 : Math.Max(1, value);
     }
     public bool WordCaseInsensitive { get; set; }
 

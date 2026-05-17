@@ -13,7 +13,7 @@ public class LangDataLetter : AbstractLangDataLetter
     public int MaxInWordCount
     {
         get => _maxInWordCount;
-        set => _maxInWordCount = Math.Max(1, value);
+        set => _maxInWordCount = value == -1 ? -1 : Math.Max(1, value);
     }
     public LetterPlacementRule PlacementRule { get; set; }
     public bool AllowInAutoGeneration { get; set; }
