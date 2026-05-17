@@ -5,7 +5,10 @@ namespace NovaLingua.Lib.Data.DataStructures;
 public class LangDataLetter : AbstractLangDataLetter
 {
     public LetterType Type { get; set; }
-    public DoubleLinkedHashMap<string, LangDataLetterVariant> Variants { get; set; } = new();
+    public DoubleLinkedHashMap<string, LangDataLetterVariant> Variants { get; set; } = new()
+    {
+        AutoUpdateOrders = true
+    };
 
     public int MaxInWordCount
     {

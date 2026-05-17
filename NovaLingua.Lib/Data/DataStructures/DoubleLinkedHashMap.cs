@@ -10,6 +10,7 @@ public class DoubleLinkedHashMap<TKey, TValue>
     public TKey? Head { get; private set; } = null;
     public TKey? Tail { get; private set; } = null;
     public Dictionary<TKey, TValue> Nodes { get; private set; } = [];
+    public bool AutoUpdateOrders { get; set; }
 
     public int Count => Nodes.Count;
     public bool IsChecked => _isChecked;
@@ -288,6 +289,15 @@ public class DoubleLinkedHashMap<TKey, TValue>
         }
     }
 
+    public bool UpdateOrders()
+    {
+        if (!CheckIfNeeded())
+        {
+            return false;
+        }
+        return UpdateOrdersNoCheck();
+    }
+
     private bool TryInsertNoCheck(TKey key, TKey prevKey, TValue prev, TKey nextKey, TValue next, TValue value)
     {
         value.Prev = prevKey;
@@ -295,7 +305,10 @@ public class DoubleLinkedHashMap<TKey, TValue>
         prev.Next = key;
         next.Prev = key;
         Nodes.Add(key, value);
-        // TODO: recounts order
+        if (AutoUpdateOrders)
+        {
+            UpdateOrdersNoCheck();
+        }
         return true;
     }
 
@@ -306,7 +319,10 @@ public class DoubleLinkedHashMap<TKey, TValue>
         head.Prev = key;
         Head = key;
         Nodes.Add(key, value);
-        // TODO: recounts order
+        if (AutoUpdateOrders)
+        {
+            UpdateOrdersNoCheck();
+        }
         return true;
     }
 
@@ -317,7 +333,37 @@ public class DoubleLinkedHashMap<TKey, TValue>
         tail.Next = key;
         Tail = key;
         Nodes.Add(key, value);
-        // TODO: recounts order
+        if (AutoUpdateOrders)
+        {
+            UpdateOrdersNoCheck();
+        }
+        return true;
+    }
+
+    /**
+     * Enhancement needed
+     */
+    private bool UpdateOrdersNoCheck()
+    {
+        if (Nodes.Count == 0)
+        {
+            return true;
+        }
+        TKey? thisNodeKey = Head!;
+        int count = 0;
+        do
+        {
+            if (Nodes.TryGetValue(thisNodeKey, out var thisNode))
+            {
+                thisNode.Order = count;
+                count++;
+                thisNodeKey = thisNode.Next;
+            }
+            else
+            {
+                return false;
+            }
+        } while (thisNodeKey != null);
         return true;
     }
 

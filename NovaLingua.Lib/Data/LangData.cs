@@ -5,7 +5,6 @@ using NovaLingua.Lib.Data.DataStructures;
 using NovaLingua.Lib.Data.DataStructures.Json;
 using NovaLingua.Lib.Exceptions;
 using NovaLingua.Lib.Extensions;
-using static NovaLingua.Lib.Data.DataStructures.AbstractLangDataWord;
 
 namespace NovaLingua.Lib.Data;
 
@@ -33,8 +32,14 @@ public class LangData
         ForceWordInflectionGlobalUnique = true,
         WordCaseInsensitive = true
     };
-    public DoubleLinkedHashMap<string, LangDataLetter> Alphabet { get; set; } = new();
-    public DoubleLinkedHashMap<string, LangDataWord> WordList { get; set; } = new();
+    public DoubleLinkedHashMap<string, LangDataLetter> Alphabet { get; set; } = new()
+    {
+        AutoUpdateOrders = true
+    };
+    public DoubleLinkedHashMap<string, LangDataWord> WordList { get; set; } = new()
+    {
+        AutoUpdateOrders = true
+    };
     public List<LangDataTodo> Todos { get; set; } = [];
 
     public bool CheckWordList()
@@ -251,7 +256,7 @@ public class LangData
         return true;
     }
 
-    private static string ConvertLetterListToString(List<Letter> letterList, bool caseInsensitive)
+    private static string ConvertLetterListToString(List<AbstractLangDataWord.Letter> letterList, bool caseInsensitive)
     {
         var outStr = "";
         foreach (var letter in letterList)
